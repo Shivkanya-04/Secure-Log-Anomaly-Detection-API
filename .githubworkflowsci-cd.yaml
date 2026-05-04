@@ -1,0 +1,65 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-scan-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Bandit (SAST)
+        run: |
+          pip install bandit
+          bandit -r . -f json -o bandit-report.json || true
+      
+      - name: pip-audit (dependency scanner)
+        run: |
+          pip install pip-audit
+          pip-audit --requirement requirements.txt --desc || true
+      
+      - name: Run pytest
+        run: |
+          pip install pytest httpx
+          pytest tests/ -v
+      
+      - name: Build Docker image
+        run: docker build -t log-anomaly-api .
+      
+      - name: Trivy image scan (CRITICAL only)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: log-anomaly-api
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL'
+          exit-code: '1'   # fails if any CRITICAL vuln found
+      
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && success()
+    runs-on: ubuntu-latest
+    needs: security-scan-and-test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
