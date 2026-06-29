@@ -112,3 +112,12 @@ async def analyze(request: Request, log_line: str, current_user = Depends(get_cu
     if len(log_line) > 10000:
         raise HTTPException(status_code=400, detail="Log line too long (max 10000 chars)")
     return detect_anomaly(log_line)
+
+@app.get("/")
+def root():
+    return {
+        "project": "Secure Log Anomaly Detection API",
+        "status": "Running",
+        "documentation": "/docs",
+        "version": "2.0"
+    }
