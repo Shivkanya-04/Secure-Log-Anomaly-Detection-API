@@ -12,7 +12,7 @@ app = FastAPI(title="Secure Log Anomaly API", version="2.0")
 app.add_middleware(ErrorTrackingMiddleware)
 
 #  JWT & bcrypt 
-SECRET_KEY = "my-super-secret-key-change-this-in-production"
+SECRET_KEY = "sut34drm9Xq!7LmP2vK8aN5zR1hY6eTw"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
