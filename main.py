@@ -9,22 +9,19 @@ import math
 import re
 
 app = FastAPI(title="Secure Log Anomaly API", version="2.0")
-
-# Add error tracking middleware
 app.add_middleware(ErrorTrackingMiddleware)
 
-# ---------- JWT & bcrypt ----------
+#  JWT & bcrypt 
 SECRET_KEY = "my-super-secret-key-change-this-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Pre-computed bcrypt hash for "SecurePass123!"
 fake_users_db = {
     "admin": {
         "username": "admin",
-        "hashed_password": "$2b$12$.qxRmL5/Ulk7a9XPmWdd3OyvvnT8x2yNjoc9f73BX67pRVEkzdOte",  # Replace with actual bcrypt hash
+        "hashed_password": "$2b$12$.qxRmL5/Ulk7a9XPmWdd3OyvvnT8x2yNjoc9f73BX67pRVEkzdOte",  
         "role": "analyst"
     }
 }
@@ -60,7 +57,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
-# ---------- Anomaly Detection ----------
+# Anomaly Detection 
 def shannon_entropy(text: str) -> float:
     if not text:
         return 0.0
@@ -88,7 +85,7 @@ def detect_anomaly(log_line: str):
         "entropy": round(entropy, 2)
     }
 
-# ---------- API Endpoints ----------
+#  API Endpoints
 @app.post("/token")
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
     client_ip = get_client_ip(request)
